@@ -2,9 +2,12 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source "$SCRIPT_DIR/src/.bash"
 source "$SCRIPT_DIR/src/kernel.bash"
+source "$SCRIPT_DIR/src/ssh.bash"
+source "$SCRIPT_DIR/src/ngnix.bash"
 source "$SCRIPT_DIR/src/git.bash"
 source "$SCRIPT_DIR/src/docker.bash"
 source "$SCRIPT_DIR/src/django.bash"
+source "$SCRIPT_DIR/src/pkg.bash"
 
 
 
