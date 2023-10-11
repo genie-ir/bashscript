@@ -17,9 +17,6 @@ source "$SCRIPT_DIR/src/pkg.bash"
 
 
 
-
-
-
 # if [ -z "$CHECK_ALIASING" ]; then
 # 	echo "source ~/alias.bash" >> ~/.bashrc
 # fi
