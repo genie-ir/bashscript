@@ -8,3 +8,5 @@ export K_GIT_EMAIL="alihejrati1996@gmail.com"
 
 # SECTION: Django
 
+# Section: compiler
+export K_COMPILER_PY="python3"

@@ -1,3 +1,10 @@
+k-argparse () # specify an arbitrary list of arguments:
+{
+    output=$(eval "$K_COMPILER_PY $K_ROOT_DIR/python/argparse_handler.py $@")
+    eval "$output"
+}
+
+
 k-cd ()
 {
     eval "mkdir -p $1 && cd $1"

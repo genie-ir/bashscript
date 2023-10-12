@@ -1,16 +1,14 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+export K_ROOT_DIR="$SCRIPT_DIR"
 
-source "$SCRIPT_DIR/src/.bash"
-source "$SCRIPT_DIR/src/kernel.bash"
-source "$SCRIPT_DIR/src/ssh.bash"
-source "$SCRIPT_DIR/src/ngnix.bash"
-source "$SCRIPT_DIR/src/git.bash"
-source "$SCRIPT_DIR/src/docker.bash"
-source "$SCRIPT_DIR/src/django.bash"
-source "$SCRIPT_DIR/src/pkg.bash"
-
-
-
+source "$K_ROOT_DIR/src/.bash"
+source "$K_ROOT_DIR/src/kernel.bash"
+source "$K_ROOT_DIR/src/ssh.bash"
+source "$K_ROOT_DIR/src/ngnix.bash"
+source "$K_ROOT_DIR/src/git.bash"
+source "$K_ROOT_DIR/src/docker.bash"
+source "$K_ROOT_DIR/src/django.bash"
+source "$K_ROOT_DIR/src/pkg.bash"
 
 
 
