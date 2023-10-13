@@ -71,7 +71,7 @@ kg-show ()
 	eval "k-underline"
 }
 
-kg-repository () # --show -> select commit with identifire or HEAD~n | --file -> cat file of commit that have been selected by flag --show.
+kg-repository () # --show -> select commit with identifire or HEAD~n | --file -> cat file of commit that have been selected by --show flag.
 {
 	eval "k-argparse --arg oneline:show:file $@"
 	if [ -z "$K_ARG_SHOW" ]
