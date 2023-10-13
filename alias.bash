@@ -1,5 +1,4 @@
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-export K_ROOT_DIR="$SCRIPT_DIR"
+export K_ROOT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source "$K_ROOT_DIR/src/.bash"
 source "$K_ROOT_DIR/src/kernel.bash"
