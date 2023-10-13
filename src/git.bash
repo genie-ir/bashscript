@@ -123,6 +123,15 @@ kg-diff-stage-head () # The --cached option displays the changes between the sta
 
 
 
+
+
+
+
+
+
+
+
+
 # NOTE: examples of git commands.
 kg-ex-status ()
 {
