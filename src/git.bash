@@ -1,3 +1,6 @@
+# Note: git version 2.34.1 has been used in development.
+
+
 # Note:
 # (color) Red   -> working directory != stage directory  (from that file, point of view)
 # (color) Green -> working directory == stage directory  (from that file, point of view)
@@ -6,13 +9,14 @@
 # (notic) head: specefic commit in repository. [default value: latest commit]
 # (define) commit it means saving a snapshot of `stage directory` to repository.
 # (define) each commit in repository is a snapshot of stage directory.
+# (define) each commit is specefic snapshot of stage.
 
 kg-version ()
 {
 	eval "git --version"
 }
 
-kg-configuration ()
+kg-configuration () # set config params.
 {
     set -- "${1:-$K_GIT_NAME}" "${2:-$K_GIT_EMAIL}" "${3:-local}" "${4:-main}" "${5:-nano}"
 	eval "git config --$3 user.name \"$1\""
@@ -26,13 +30,13 @@ kg-configuration ()
     # local  -> the current repository
 }
 
-kg-cfg ()
+kg-configuration-print () # show config file.
 {
 	set -- "${1:-local}" # system, global, local
 	eval "git config --$1 -e"
 }
 
-kg-init ()
+kg-init () # initilize a repository.
 {
     set -- "${1:-~/my-project}"
 	eval "k-cd \"$1\""
@@ -42,83 +46,109 @@ kg-init ()
 	eval "kg-configuration"
 }
 
-kg-status () # workdir vs stage
+kg-status () # status between workdir vs stage
 {
 	eval "git status -s" # output -> (stage_dir, working_dir, filename)
 	eval "k-underline"
 }
 
+# Note: we have command `ls` for workdir.
 kg-ls-stage () # ls inside stage directory
 {
 	eval "git ls-files"
 	eval "k-underline"
 }
 
-kg-rm-stage () # only remove from the stage directory
+kg-ls-repo () # ls inside repo at specefic commit determined by identifire
+{
+	set -- "${1:-HEAD~0}" # identifire or HEAD~n
+	eval "git ls-tree $1" # Note: in outout if this command: blob -> file and tree -> directory
+	eval "k-underline"
+}
+
+# Note: we have command `rm -rf` for workdir.
+kg-rm-stage () # only remove file from stage directory
 {
 	eval "git rm --cached -rf \"$1\""
 }
 
-kg-rm-both () # both -> working directory and stage directory
+kg-rm-both () # remove file from `workdir` and `stage`
 {
 	eval "git rm -rf \"$1\""
 }
 
-kg-show ()
+# Note: we have command `cat` for workdir.
+kg-cat-stage () # cat file on stage. # $1 is `file path` on stage.
 {
-	set -- "${1:-HEAD~0}" # $1: identifire or HEAD~n
+	eval "git show :$1"
+	eval "k-underline"
+}
+
+kg-cat-repo ()
+{
+	# $1: identifire or HEAD~n  # Note: if identifire is belong to file then will show content of it. (file identifire can be found trough `kg-ls-repo HEAD~n`)
+	# $2: file path
+	set -- "${1:-HEAD~0}" "${2:-}" 
+	eval "git show $1:$2"
+	eval "k-underline"
+}
+
+kg-cat-repo-fid () # cat file on specefic commit of repo. # $1 is `file identifire` on repo commited snapshot.
+{
 	eval "git show $1"
 	eval "k-underline"
 }
 
-kg-repository () # --show -> select commit with identifire or HEAD~n | --file -> cat file of commit that have been selected by --show flag.
+# Note: high level view of repository at specefic branch.
+kg-repository () # detailing view
 {
-	eval "k-argparse --arg oneline:show:file $@"
-	if [ -z "$K_ARG_SHOW" ]
+	if [ -z "$1" ]
 	then
-		if [ -z "$K_ARG_ONELINE" ]
-		then
-			eval "git log"
-		else
-			eval "git log --oneline"
-		fi
+		eval "git log"
 	else
-		if [ -z "$K_ARG_FILE" ]
-		then
-			eval "kg-show $K_ARG_SHOW"
-		else
-			eval "kg-show $K_ARG_SHOW:$K_ARG_FILE"
-		fi
+		eval "git show $1"
 	fi
-}
-
-kg-repo ()
-{
-	eval "kg-repository $@ --oneline set"
-}
-
-
-# Note: viewing diff is a forward operation. from (work_dir to [stage or head]) or from (stage to head)
-kg-diff-workdir-stage () # The `git diff` command displays the changes between the working directory and the staging area.
-{
-	eval "git diff"
 	eval "k-underline"
 }
 
-kg-diff-workdir-head () # shows all the changes made between the working directory and HEAD, including changes in the staging area. It displays all the changes since the last commit, whether staged for commit or not.
+kg-repo () # short view
 {
-	set -- "${1:-0}"
-	eval "git diff HEAD~$1" # TODO: do it code for reciving head as an argument.
+	if [ -z "$1" ]
+	then
+		eval "git log --oneline"
+	else
+		eval "git show $1"
+	fi
 	eval "k-underline"
 }
 
-kg-diff-stage-head () # The --cached option displays the changes between the staging area and the HEAD.
+# Note: diff is a forward operation. from (work_dir to [stage or head]) or from (stage to head)
+# kg-diff-workdir-stage () # The `git diff` command displays the changes between the working directory and the staging area.
+# {
+# 	eval "git diff"
+# 	eval "k-underline"
+# }
+
+# kg-diff-workdir-head () # shows all the changes made between the working directory and HEAD, including changes in the staging area. It displays all the changes since the last commit, whether staged for commit or not.
+# {
+# 	set -- "${1:-0}"
+# 	eval "git diff HEAD~$1" # TODO: do it code for reciving head as an argument.
+# 	eval "k-underline"
+# }
+
+# kg-diff-stage-head () # The --cached option displays the changes between the staging area and the HEAD.
+# {
+# 	eval "git diff --staged" #eval "git diff --cached"  --> (--staged is a synonym for --cached)
+# 	eval "k-underline"
+# }
+
+# Note: syncronizing files.
+kg-sync-stage-repo () # overwrite file from repo to stage. if file doesnt exist in repo then file gonna be delete from stage.
 {
-	eval "git diff --staged" #eval "git diff --cached"  --> (--staged is a synonym for --cached)
-	eval "k-underline"
+	# $1: identifire -> hashID or HEAD~n
+	# $2: file path
+	eval "git restore --staged --source=$1 $2"
 }
-
-
 
 
 
@@ -133,172 +163,59 @@ kg-diff-stage-head () # The --cached option displays the changes between the sta
 
 
 # NOTE: examples of git commands.
-kg-ex-status ()
+kg-ex-f0 ()
 {
-	eval "kg-init $(k-strrand)"
-	eval "kg-status"
-	eval "echo hello > file1.txt" # unstaged file
-	eval "echo hello > file2.txt" # unstaged file
-	eval "kg-status"
-	eval "git add ." # `.` means entire directory recursivly. we can use regexp or listing files by space.
-	eval "kg-status"
-	eval "echo world >> file1.txt" # here we have `unstaged (changes)`
-	eval "kg-status"
-	eval "git add ."
-	eval "kg-status"
-	eval "git rm --cached file2.txt" # here we have `unstaged (file)` # TODO: git restore --staged filename
-	eval "kg-status"
-	eval "git add ."
-	eval "kg-status"
-	eval "git commit" # not using -m flag, was cuesd to openning git_commit file in default editor
+	kg-status
+	kg-ls-stage
+	ls
+	k-underline
 }
-
-kg-ex-history ()
+kg-ex1 ()
 {
-	eval "kg-init $(k-strrand)"
-	eval "echo hello > file1.txt" # unstaged file
-	eval "echo hello > file2.txt" # unstaged file
-	eval "git add ."
-	eval "git commit -m fs"
-	eval "k-underline"
-	eval "echo changes >> file1.txt"
-	eval "git add ."
-	eval "git commit -m sc"
-	eval "k-underline"
-	eval "kg-repo --show HEAD~0 --file ./file1.txt"
-	eval "kg-repo --show HEAD~1 --file ./file1.txt"
-	eval "kg-repo --show HEAD~0 --file ./file1.txt"
-}
-
-kg-ex-rm () # remove eample
-{
-	eval "kg-init $(k-strrand)"
-	eval "kg-status"
-	eval "echo hello > file1.txt" # unstaged file
-	eval "echo hello > file2.txt" # unstaged file
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git add ."
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git commit -m done"
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "rm file1.txt"
-	eval "kg-status"
-	eval "kg-ls-stage" # file1 is exist on stage
-	eval "k-ls"
-	eval "git add ." # NOTE: do it on stage!! file1 is deleted from stage
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "rm file2.txt"
-	eval "kg-status"
-	eval "kg-ls-stage" # file2 exist on stage
-	eval "k-ls"
-	eval "git restore file2.txt"
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git commit -m ok"
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-}
-
-kg-ex-rm2 () # remove eample: git rm ...
-{
-	eval "kg-init $(k-strrand)"
-	eval "kg-status"
-	eval "echo hello > file1.txt" # unstaged file
-	eval "echo hello > file2.txt" # unstaged file
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git add ."
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git rm -rf file1.txt" # removed file from working directory and stage directory
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git commit -m ok"
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git rm -rf file2.txt"
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
+	kg-init $(k-strrand)
+	kg-ex-f0
+	echo "hello" > file1.txt # unstaged file
+	echo "hello" > file2.txt # unstaged file
+	kg-ex-f0
+	git add . # transfering file to stage
+	git commit -m fs # taking snapshot from `stage` and saveing it on `repository` as `commit` in `branch`.
+	kg-ex-f0
+	kg-repo
+	kg-ls-repo
+	echo "hello world" >> file1.txt
+	touch file3.txt
+	kg-ex-f0
+	git add .
+	git commit -m sc
+	kg-ex-f0
+	kg-repo
+	kg-ls-repo # this line take `ls` inside HEAD~0
+	kg-repo HEAD~1 # identifire -> hashID or HEAD~n # Note: this line show diff information of commit.
+	kg-ls-repo HEAD~1 # identifire -> hashID or HEAD~n
+	k-underline +
+	# kg-cat-repo-fid ce013625030ba8dba906f756967f9e9ca394464a # Note: fid is unique for each file since I comment it here.
+	kg-cat-repo HEAD~0 file1.txt
+	kg-cat-repo HEAD~1 file1.txt
+	kg-cat-stage file1.txt
+	cat file1.txt
+	k-underline +
+	echo "---> stage>file1.txt has been overwrite from HEAD~1:file1.txt of repository."
+	kg-sync-stage-repo HEAD~1 file1.txt
+	kg-ex-f0
+	kg-cat-repo HEAD~0 file1.txt
+	kg-cat-repo HEAD~1 file1.txt
+	kg-cat-stage file1.txt
+	cat file1.txt
+	k-underline =
+	echo "---> workdir>file1.txt changed now."
+	echo "new change" >> file1.txt
+	k-underline +
+	kg-ex-f0
+	kg-cat-repo HEAD~0 file1.txt
+	kg-cat-repo HEAD~1 file1.txt
+	kg-cat-stage file1.txt
+	cat file1.txt
+	k-underline ^
+	echo "---> diff stage>file1txt vs HEAD~0:file1.txt from repository."
 
 }
-
-kg-ex-mv () # rename example
-{
-	eval "kg-init $(k-strrand)"
-	eval "kg-status"
-	eval "echo hello > file1.txt" # unstaged file
-	eval "echo hello > file2.txt" # unstaged file
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git add ."
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "mv file1.txt main.js"
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git add ."
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git commit -m ok"
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-}
-
-kg-ex-mv2 () # rename example: git mv ...
-{
-	eval "kg-init $(k-strrand)"
-	eval "kg-status"
-	eval "echo hello > file1.txt" # unstaged file
-	eval "echo hello > file2.txt" # unstaged file
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git add ."
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-	eval "git mv file1.txt main.js"
-	eval "kg-status"
-	eval "kg-ls-stage"
-	eval "k-ls"
-}
-
-kg-ex-diff () # viewing diff between workdir -> stage and stage -> head
-{
-	eval "kg-init $(k-strrand)"
-	echo -e "viewing results:\n\n"
-	eval "echo hello > file1.txt" # unstaged file
-	eval "echo hello > file2.txt" # unstaged file
-	eval "kg-diff-workdir-stage" # Note: stage: empty -> No diff
-	eval "kg-diff-stage-head"    # Note: stage: empty -> No diff
-	eval "git add ."
-	eval "kg-diff-workdir-stage" # Note: work_dir and stage are same -> No diff
-	eval "kg-diff-stage-head"    # Note: stage is not empty -> view diff between stage and head
-	eval "git commit -m ok"
-	echo -e "viewing results after commit:\n\n"
-	eval "kg-diff-workdir-stage" # workdir and stage are same
-	eval "kg-diff-stage-head"    # stage and head are same
-}
-
-
-
