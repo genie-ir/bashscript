@@ -10,6 +10,8 @@
 # (define) commit it means saving a snapshot of `stage directory` to repository.
 # (define) each commit in repository is a snapshot of stage directory.
 # (define) each commit is specefic snapshot of stage.
+# (sync) -> file or pattern that discribe files, between two point.
+# (diff) -> all files between two point.
 
 kg-version ()
 {
@@ -122,33 +124,53 @@ kg-repo () # short view
 	eval "k-underline"
 }
 
-# Note: diff is a forward operation. from (work_dir to [stage or head]) or from (stage to head)
-# kg-diff-workdir-stage () # The `git diff` command displays the changes between the working directory and the staging area.
-# {
-# 	eval "git diff"
-# 	eval "k-underline"
-# }
+# Note: 1) diff operation conssiders all files. 2) diff is a forward operation from (work_dir to [stage or head]) or from (stage to head)
+kg-diff-workdir-stage () # The `git diff` command displays the changes between the working directory and the staging area.
+{
+	eval "git diff"
+	eval "k-underline"
+}
 
-# kg-diff-workdir-head () # shows all the changes made between the working directory and HEAD, including changes in the staging area. It displays all the changes since the last commit, whether staged for commit or not.
-# {
-# 	set -- "${1:-0}"
-# 	eval "git diff HEAD~$1" # TODO: do it code for reciving head as an argument.
-# 	eval "k-underline"
-# }
+kg-diff-workdir-repo () # workdir vs specefic commit of repository.
+{
+	set -- "${1:-HEAD~0}"
+	eval "git diff $1" 
+	eval "k-underline"
+}
 
-# kg-diff-stage-head () # The --cached option displays the changes between the staging area and the HEAD.
-# {
-# 	eval "git diff --staged" #eval "git diff --cached"  --> (--staged is a synonym for --cached)
-# 	eval "k-underline"
-# }
+kg-diff-stage-repo () # stage vs specefic commit of repository.
+{
+	set -- "${1:-HEAD~0}"
+	eval "git diff $1 --staged" #eval "git diff --cached"  --> (--staged is a synonym for --cached)
+	eval "k-underline"
+}
 
 # Note: syncronizing files.
-kg-sync-stage-repo () # overwrite file from repo to stage. if file doesnt exist in repo then file gonna be delete from stage.
+kg-sync-repo2stage () # overwrite file from repo to stage. if file doesnt exist in repo then file gonna be delete from stage.
 {
 	# $1: identifire -> hashID or HEAD~n
 	# $2: file path
 	eval "git restore --staged --source=$1 $2"
 }
+
+kg-sync-stage2repo () # commit operation. # overwriting a commit does not make sence anyway, so we take a new snapshot and we create it in a new commit on repository.
+{
+	set -- "${1:-Taking snapshot of stage directory.}"
+	# $1: msg -> hashID or HEAD~n
+	eval "git commit -m $1"
+}
+
+kg-sync-workdir2stage () # add operation. # overwrite file from workdir to stage. if file doesnt exist in workdir then file gonna be delete from stage.
+{
+	set -- "${1:-.}" # default is all files.
+	# $1: file path
+	eval "git add $1"
+}
+
+# kg-sync-stage2workdir () # overwrite file from stage to workdir. if file doesnt exist in stage then file gonna be delete from workdir.
+# {
+# 	# TODO
+# }
 
 
 
@@ -200,7 +222,7 @@ kg-ex1 ()
 	cat file1.txt
 	k-underline +
 	echo "---> stage>file1.txt has been overwrite from HEAD~1:file1.txt of repository."
-	kg-sync-stage-repo HEAD~1 file1.txt
+	kg-sync-repo2stage HEAD~1 file1.txt
 	kg-ex-f0
 	kg-cat-repo HEAD~0 file1.txt
 	kg-cat-repo HEAD~1 file1.txt
@@ -216,6 +238,18 @@ kg-ex1 ()
 	kg-cat-stage file1.txt
 	cat file1.txt
 	k-underline ^
-	echo "---> diff stage>file1txt vs HEAD~0:file1.txt from repository."
-
+	echo "---> diff stage vs HEAD~0 from repository."
+	kg-diff-stage-repo
+	k-underline ^
+	echo "---> diff stage vs HEAD~1 from repository."
+	kg-diff-stage-repo HEAD~1
+	k-underline ^
+	echo "---> diff workdir vs stage"
+	kg-diff-workdir-stage
+	k-underline ^
+	echo "---> diff workdir vs repo HEAD~0"
+	kg-diff-workdir-repo HEAD~0
+	k-underline ^
+	echo "---> diff workdir vs repo HEAD~1"
+	kg-diff-workdir-repo HEAD~1
 }
