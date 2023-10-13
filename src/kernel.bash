@@ -23,7 +23,8 @@ k-reload ()
 
 k-underline ()
 {
-    eval "printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -"
+    set -- "${1:--}"
+    eval "printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' $1"
 }
 
 k-ls ()
