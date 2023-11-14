@@ -146,10 +146,19 @@ kg-diff-stage-repo () # stage vs specefic commit of repository.
 }
 
 # Note: syncronizing files.
+kg-sync-repo2workdir () # overwrite file from repo to workdir. if file doesnt exist in repo then file gonna be delete from workdir.
+{
+	set -- "${1:-HEAD~0}" "${2:-.}"
+	# $1: identifire -> hashID or HEAD~n
+	# $2: file path we want overwrite it from repo(specefic commit) to workdir.
+	eval "git restore --source=$1 $2"
+}
+
 kg-sync-repo2stage () # overwrite file from repo to stage. if file doesnt exist in repo then file gonna be delete from stage.
 {
+	set -- "${1:-HEAD~0}" "${2:-.}"
 	# $1: identifire -> hashID or HEAD~n
-	# $2: file path
+	# $2: file path we want overwrite it from repo(specefic commit) to stage.
 	eval "git restore --staged --source=$1 $2"
 }
 
@@ -167,12 +176,22 @@ kg-sync-workdir2stage () # add operation. # overwrite file from workdir to stage
 	eval "git add $1"
 }
 
-# kg-sync-stage2workdir () # overwrite file from stage to workdir. if file doesnt exist in stage then file gonna be delete from workdir.
-# {
-# 	# TODO
-# }
+kg-sync-stage2workdir () # overwrite file from stage to workdir. # Note: if file doesnt exist in stage then file `doesnt` gonna be delete from workdir (git policy: stage->workdir).
+{ # Discarding local changes.
+	set -- "${1:-.}"
+	# $1: file path we want overwrite it from stage to workdir.
+	eval "git restore $1"
+}
 
+kg-sync-stage2workdir-clean () # overwrite file from stage to workdir. if file doesnt exist in stage then file gonna be delete from workdir.
+{ # Discarding local changes.
+	set -- "${1:-.}"
+	# $1: file path we want overwrite it from stage to workdir.
+	eval "git restore $1"
+	eval "git clean -fd" # Note: if there is a file or directory in workdir such that those are not been in stage, git will gonna delete those files or directories.
+}
 
+# Note: Search for commits (by author, date, message, etc...) Find a bad commit that introduced a bug.
 
 
 

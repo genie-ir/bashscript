@@ -38,3 +38,14 @@ k-ll ()
     eval "ll"
     eval "k-underline"
 }
+
+k-zip ()
+{
+    set -- "${1:--}"
+    eval "zip -r \"$(realpath -s $1).zip\" $1"
+}
+
+k-unrar ()
+{
+    eval "unrar x -p './*.rar'"
+}
