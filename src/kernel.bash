@@ -39,6 +39,26 @@ k-ll ()
     eval "k-underline"
 }
 
+k-ls-disk ()
+{
+    eval "lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT,LABEL -e7"
+    eval "k-underline"
+}
+
+k-dmg2iso ()
+{
+    set -- "${1:--}"
+    echo "help) install: sudo apt-get install dmg2img"
+    eval "sudo dmg2img -v -i \"$1.dmg\" -o \"$1.iso\""
+}
+
+k-iso2boot ()
+{
+    set -- "${1:--}" "${2:--sdb}"
+    echo "help) for macos, you need convert dmg to iso: k-dmg2iso filepath_without_extention"
+    eval "sudo dd if=\"$1.iso\" of=\"/dev/$2\" && sync"
+}
+
 k-zip ()
 {
     set -- "${1:--}"
@@ -49,3 +69,4 @@ k-unrar ()
 {
     eval "unrar x -p './*.rar'"
 }
+
